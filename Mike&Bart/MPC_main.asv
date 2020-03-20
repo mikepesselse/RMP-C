@@ -11,60 +11,46 @@ addpath(genpath(folder));
 %% Construct SS-models
 Ts = 0.02;
 % 
-linstate = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]*1e-10;     % Linearise around theta = 0
-% linstate = ones(1,17);
+linstate = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]*1e-10;     % Linearise around linstate
 [CTSS1, DTSS1] = constructmodel(Ts, linstate);
-% 
-% linstate = [pi 0 0 0 0];    % Linearise around theta = pi
-% [CTSS2, DTSS2] = constructmodel(Ts, linstate);
+
+CTSS2 = ss;
+CTSS2.A =   [0 0 0 1 0 0 0 0 0 0 0 0;
+             0 0 0 0 1 0 0 0 0 0 0 0;
+             0 0 0 0 0 1 0
+
 
 %% MPC data
-mpc_sim.Q   = [1e4 0 0 0          % State matrix
-                0 1 0 0
-                0 0 1e4 0
-                0 0 0 1];
+mpc_sim.Q   = eye(13);
+mpc_sim.Q(1, 1) = 1000;
+mpc_sim.Q(2,2) = mpc_sim.Q(1,1);
+mpc_sim.Q(3,3) = mpc_sim.Q(2,2);
 mpc_sim.Qt  = mpc_sim.Q*1000;     % Terminal state matrix
-mpc_sim.R   = 1e4;                % Input matrix
+mpc_sim.R   = eye(4);                % Input matrix
 mpc_sim.N   = ceil(1/Ts);         % Control horizon
 
-%% PID data
-% syspid = tf(DTSS); pidTuner(syspid(1), 'PID')
-% Kp = 12.01;
-% Ki = 1.7;
-% Kd = 2.315;
-
 %% Simulation settings
-x0_angle = 180; % Angle offset from upright equilibrium point  
-x0 = [x0_angle/180*pi; 0; 0; 0];  % Initial conditions
+x0 = ones(13, 1);  % Initial conditions
 simT = 5;              % Simulation time [s]
 ulim = 15;              % Maximum absolute value input
 plim = 1;               % Maximum absolute value positiond
-noise = false;       	% Toggle sensor noise
 
 %% Run simulations
 % MPC with observer
-observer = true;
-[results_mpc] = MPC_Controller(DTSS1, DTSS2, mpc_sim, x0, simT, Ts, model, ulim, plim, noise, observer);
-
-% MPC without observer
-observer = false;
-[results_mpc_no_observer] = MPC_Controller(DTSS1, DTSS2, mpc_sim, x0, simT, Ts, model, ulim, plim, noise, observer);
-
-% PID
-[results_pid] = PID_Controller(Kp, Ki, Kd, simT, Ts, x0, model, ulim, noise);
+[results_mpc] = MPC_Controller(DTSS1, mpc_sim, x0, simT, Ts, ulim, plim);
 
 %% Plot results
-results = results_mpc_no_observer;
+results = results_mpc;
 
 % Input plot
-figure; set(gcf,'units','normalized','outerposition',[0.5 0 .5 .5])
-stairs(results.U,'b'); hold on;
-plot(zeros(simT/Ts, 1));
-plot(1:simT/Ts,ulim*ones(simT/Ts,1),'--k'); 
-plot(1:simT/Ts,-ulim*ones(simT/Ts,1),'--k');
-ylim([-ulim*1.1 ulim*1.1]); grid on;
-ylabel('Input [N]'); xlabel('Timesteps'); title(['Input', results.title])
-legend('MPC without observer', 'no input')
+% figure; set(gcf,'units','normalized','outerposition',[0.5 0 .5 .5])
+% stairs(results.U,'b'); hold on;
+% plot(zeros(simT/Ts, 1));
+% plot(1:simT/Ts,ulim*ones(simT/Ts,1),'--k'); 
+% plot(1:simT/Ts,-ulim*ones(simT/Ts,1),'--k');
+% ylim([-ulim*1.1 ulim*1.1]); grid on;
+% ylabel('Input [N]'); xlabel('Timesteps'); title(['Input', results.title])
+% legend('MPC without observer', 'no input')
 
 % % Angle pendulum plot
 % figure; set(gcf,'units','normalized','outerposition',[0 0 .5 .5])
@@ -83,39 +69,39 @@ legend('MPC without observer', 'no input')
 % ylabel('position'); xlabel('Timesteps'); title(['Position cart', results.title])
 % legend('MPC without observer', 'Reference')
 
-% Overview plot
-if noise; txt = 'with'; else; txt = 'without'; end
-figure; set(gcf,'units','normalized','outerposition',[0.5 0.5 .5 .5])
-ax1 = subplot(2,1,1);
-plot([results_mpc_no_observer.state(:, 1)/pi*180 zeros(simT/Ts, 1) results_pid.state(:, 1)/pi*180 results_mpc.state(:, 1)/pi*180]); hold on;
-plot(1:simT/Ts,180*ones(simT/Ts,1),'--k'); 
-plot(1:simT/Ts,-180*ones(simT/Ts,1),'--k'); grid on;
-ylabel('deg'); xlabel('Timesteps'); title(['Angle pendulum ', txt, ' noise'])
-legend('MPC without observer', 'Reference', 'PID','MPC with observer')
-
-ax2 = subplot(2,1,2); 
-plot([results_mpc_no_observer.state(:,3) zeros(simT/Ts, 1) results_pid.state(:, 3) results_mpc.state(:, 3)]); hold on;
-plot(1:simT/Ts,plim*ones(simT/Ts,1),'--k'); 
-plot(1:simT/Ts,-plim*ones(simT/Ts,1),'--k');
-ylim([-plim*1.1 plim*1.1]); grid on;
-ylabel('m'); xlabel('Timesteps'); title(['Position cart ', txt, ' noise'])
-legend('MPC without observer', 'Reference', 'PID','MPC with observer')
-linkaxes([ax1,ax2],'x');
+% % Overview plot
+% txt = 'without';
+% figure; set(gcf,'units','normalized','outerposition',[0.5 0.5 .5 .5])
+% ax1 = subplot(2,1,1);
+% plot([results_mpc_no_observer.state(:, 1)/pi*180 zeros(simT/Ts, 1) results_pid.state(:, 1)/pi*180 results_mpc.state(:, 1)/pi*180]); hold on;
+% plot(1:simT/Ts,180*ones(simT/Ts,1),'--k'); 
+% plot(1:simT/Ts,-180*ones(simT/Ts,1),'--k'); grid on;
+% ylabel('deg'); xlabel('Timesteps'); title(['Angle pendulum ', txt, ' noise'])
+% legend('MPC without observer', 'Reference', 'PID','MPC with observer')
+% 
+% ax2 = subplot(2,1,2); 
+% plot([results_mpc_no_observer.state(:,3) zeros(simT/Ts, 1) results_pid.state(:, 3) results_mpc.state(:, 3)]); hold on;
+% plot(1:simT/Ts,plim*ones(simT/Ts,1),'--k'); 
+% plot(1:simT/Ts,-plim*ones(simT/Ts,1),'--k');
+% ylim([-plim*1.1 plim*1.1]); grid on;
+% ylabel('m'); xlabel('Timesteps'); title(['Position cart ', txt, ' noise'])
+% legend('MPC without observer', 'Reference', 'PID','MPC with observer')
+% linkaxes([ax1,ax2],'x');
 
 
 %% Animate results
-figure
-% set(gcf, 'Units', 'Centimeters', 'Position', [-60 -60 30 15])
-set(gcf,'units','normalized','outerposition',[0 0.5 .5 .5])
-title(['Simulation', results.title])
-
-y(:, 1) = results.state(:, 3);
-y(:, 2) = results.state(:, 4);
-y(:, 3) = results.state(:, 1);
-y(:, 4) = results.state(:, 2);
-
-tic
-for k=1:simT/Ts
-    drawcartpend(y(k,:),2,2,model.l);
-end
-toc
+% figure
+% % set(gcf, 'Units', 'Centimeters', 'Position', [-60 -60 30 15])
+% set(gcf,'units','normalized','outerposition',[0 0.5 .5 .5])
+% title(['Simulation', results.title])
+% 
+% y(:, 1) = results.state(:, 3);
+% y(:, 2) = results.state(:, 4);
+% y(:, 3) = results.state(:, 1);
+% y(:, 4) = results.state(:, 2);
+% 
+% tic
+% for k=1:simT/Ts
+%     drawcartpend(y(k,:),2,2,model.l);
+% end
+% toc
