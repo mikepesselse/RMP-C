@@ -62,21 +62,24 @@ mpc_sim.Q   =   [1   0   0   0   0   0   0   0   0   0   0   0;
                  0   0   0   1   0   0   0   0   0   0   0   0;
                  0   0   0   0   1   0   0   0   0   0   0   0;
                  0   0   0   0   0   1   0   0   0   0   0   0;
-                 0   0   0   0   0   0   1e2 0   0   0   0   0;
+                 0   0   0   0   0   0   1e4 0   0   0   0   0;
                  0   0   0   0   0   0   0   1   0   0   0   0;
-                 0   0   0   0   0   0   0   0   1e2 0   0   0;
+                 0   0   0   0   0   0   0   0   1e4 0   0   0;
                  0   0   0   0   0   0   0   0   0   1   0   0;
-                 0   0   0   0   0   0   0   0   0   0   1e2 0;
+                 0   0   0   0   0   0   0   0   0   0   1e4 0;
                  0   0   0   0   0   0   0   0   0   0   0   1];
+mpc_sim.Q(1, 1) = 1000;
+mpc_sim.Q(2,2) = mpc_sim.Q(1,1);
+mpc_sim.Q(3,3) = mpc_sim.Q(2,2);
 mpc_sim.Qt  = mpc_sim.Q*1000;     % Terminal state matrix
 mpc_sim.R   = eye(4);                % Input matrix
 mpc_sim.N   = ceil(2/Ts);         % Control horizon
 
 %% Simulation settings
-x0 = [0 0 0 0 0 0 -0.5 0 1 0 1 0]';  % Initial conditions
-wayp = [0 0 0 0 0 0 0.1 0 0.5 0 0.5 0];
-simT = 5;              % Simulation time [s]
-ulim = [1 1 1 1]*0.1;              % Maximum absolute value input
+x0 = [0 0 0 0 0 0 0 0 1 0 1 0]';  % Initial conditions
+wayp = [0 0 0 0 0 0 0 0 0.6 0 0.5 0];
+simT = 4;              % Simulation time [s]
+ulim = [1 1 1 1]*1;              % Maximum absolute value input
 plim = 1;               % Maximum absolute value positiond
 
 %% Run simulations
