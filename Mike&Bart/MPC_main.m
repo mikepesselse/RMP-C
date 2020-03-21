@@ -73,8 +73,14 @@ mpc_sim.R   = eye(4);                % Input matrix
 mpc_sim.N   = ceil(2/Ts);         % Control horizon
 
 %% Simulation settings
-x0 = [0 0 0 0 0 0 -0.5 0 1 0 1 0]';  % Initial conditions
-wayp = [0 0 0 0 0 0 0.1 0 0.5 0 0.5 0];
+x0 = [0 0 0 0 0 0 0 0 0 0 0 0]';  % Initial conditions, [Tom: op 0 gezet (is handiger voor de simulatie)]
+
+randx = 0.1*randi([1 10],1);
+randy = 0.1*randi([1 10],1);
+randz = 0.1*randi([1 10],1);
+
+wayp = [0 0 0 0 0 0 randz 0 randx 0 randy 0]; %[Tom: kiest een random waypoint tussen x,y,z =[0,1]
+%wayp = [0 0 0 0 0 0 0.1 0 0.5 0 0.5 0]; 
 simT = 5;              % Simulation time [s]
 ulim = [1 1 1 1]*0.1;              % Maximum absolute value input
 plim = 1;               % Maximum absolute value positiond
