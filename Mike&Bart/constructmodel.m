@@ -1,9 +1,9 @@
 function [CTSS, DTSS] = constructmodel(Ts, linstate)
 
-[jac] = findjacobian(linstate);
+[jac] = findjacobian2(linstate);
 CTSS = ss;
-CTSS.A = eval(jac(:, 1:13));
-CTSS.B = eval(jac(:, 14:17));
+CTSS.A = eval(jac(:, 1:12));
+CTSS.B = eval(jac(:, 13:16));
 
 % CTSS = ss;
 % CTSS.A = [0 1 0 0
@@ -16,7 +16,7 @@ CTSS.B = eval(jac(:, 14:17));
 %     0
 %     4/(7*model.m+4*model.M)];
 
-CTSS.C = eye(13);
+CTSS.C = eye(12);
 
 CTSS.D = 0;
 

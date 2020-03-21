@@ -11,78 +11,79 @@ addpath(genpath(folder));
 %% Construct SS-models
 Ts = 0.02;
 % 
-linstate = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]*1e-10;     % Linearise around linstate
+linstate = [0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1];     % Linearise around linstate
+% linstate = zeros(1, 16);
 [CTSS1, DTSS1] = constructmodel(Ts, linstate);
 
-g = 9.81;
-m = 0.03;
-Ix = 1.43e-5;
-Iy = 1.43e-5;
-Iz = 2.89e-5;
-
-CTSS2 = ss;
-CTSS2.A =   [0 0 0 1 0 0 0 0  0 0 0 0;
-             0 0 0 0 1 0 0 0  0 0 0 0;
-             0 0 0 0 0 1 0 0  0 0 0 0;
-             0 0 0 0 0 0 0 -g 0 0 0 0;
-             0 0 0 0 0 0 g 0  0 0 0 0;
-             0 0 0 0 0 0 0 0  0 0 0 0;
-             0 0 0 0 0 0 0 0  0 1 0 0;
-             0 0 0 0 0 0 0 0  0 0 1 0;
-             0 0 0 0 0 0 0 0  0 0 0 1;
-             0 0 0 0 0 0 0 0  0 0 0 0;
-             0 0 0 0 0 0 0 0  0 0 0 0;
-             0 0 0 0 0 0 0 0  0 0 0 0];
-
-CTSS2.B =    [0   0    0    0   0;
-             0   0    0    0    0;
-             0   0    0    0    0;
-             0   0    0    0    0;
-             1/m 0    0    0    0;
-             0   0    0    0    -g;
-             0   0    0    0    0;
-             0   0    0    0    0;
-             0   0    0    0    0;
-             0   1/Ix 0    0    0;
-             0   0    1/Iy 0    0;
-             0   0    0    1/Iz 0];
-         
-CTSS2.C = eye(12);
-CTSS2.D = 0;
-
-DTSS2 = c2d(CTSS2, Ts, 'zoh');
+% g = 9.81;
+% m = 0.03;
+% Ix = 1.43e-5;
+% Iy = 1.43e-5;
+% Iz = 2.89e-5;
+% 
+% CTSS2 = ss;
+% CTSS2.A =   [0 0 0 1 0 0 0 0  0 0 0 0;
+%              0 0 0 0 1 0 0 0  0 0 0 0;
+%              0 0 0 0 0 1 0 0  0 0 0 0;
+%              0 0 0 0 0 0 0 -g 0 0 0 0;
+%              0 0 0 0 0 0 g 0  0 0 0 0;
+%              0 0 0 0 0 0 0 0  0 0 0 0;
+%              0 0 0 0 0 0 0 0  0 1 0 0;
+%              0 0 0 0 0 0 0 0  0 0 1 0;
+%              0 0 0 0 0 0 0 0  0 0 0 1;
+%              0 0 0 0 0 0 0 0  0 0 0 0;
+%              0 0 0 0 0 0 0 0  0 0 0 0;
+%              0 0 0 0 0 0 0 0  0 0 0 0];
+% 
+% CTSS2.B =    [0   0    0    0   0;
+%              0   0    0    0    0;
+%              0   0    0    0    0;
+%              0   0    0    0    0;
+%              1/m 0    0    0    0;
+%              0   0    0    0    -g;
+%              0   0    0    0    0;
+%              0   0    0    0    0;
+%              0   0    0    0    0;
+%              0   1/Ix 0    0    0;
+%              0   0    1/Iy 0    0;
+%              0   0    0    1/Iz 0];
+%          
+% CTSS2.C = eye(12);
+% CTSS2.D = 0;
+% 
+% DTSS2 = c2d(CTSS2, Ts, 'zoh');
 
 
 
 %% MPC data
-mpc_sim.Q   =   [1e4 0   0   0   0   0   0   0   0   0   0   0;
-                 0   1e4 0   0   0   0   0   0   0   0   0   0;
-                 0   0   1e4 0   0   0   0   0   0   0   0   0;
+mpc_sim.Q   =   [1   0   0   0   0   0   0   0   0   0   0   0;
+                 0   1   0   0   0   0   0   0   0   0   0   0;
+                 0   0   1   0   0   0   0   0   0   0   0   0;
                  0   0   0   1   0   0   0   0   0   0   0   0;
                  0   0   0   0   1   0   0   0   0   0   0   0;
                  0   0   0   0   0   1   0   0   0   0   0   0;
-                 0   0   0   0   0   0   1   0   0   0   0   0;
+                 0   0   0   0   0   0   1e4 0   0   0   0   0;
                  0   0   0   0   0   0   0   1   0   0   0   0;
-                 0   0   0   0   0   0   0   0   1   0   0   0;
+                 0   0   0   0   0   0   0   0   1e4 0   0   0;
                  0   0   0   0   0   0   0   0   0   1   0   0;
-                 0   0   0   0   0   0   0   0   0   0   1   0;
+                 0   0   0   0   0   0   0   0   0   0   1e4 0;
                  0   0   0   0   0   0   0   0   0   0   0   1];
 mpc_sim.Q(1, 1) = 1000;
 mpc_sim.Q(2,2) = mpc_sim.Q(1,1);
 mpc_sim.Q(3,3) = mpc_sim.Q(2,2);
 mpc_sim.Qt  = mpc_sim.Q*1000;     % Terminal state matrix
-mpc_sim.R   = eye(5);                % Input matrix
+mpc_sim.R   = eye(4);                % Input matrix
 mpc_sim.N   = ceil(1/Ts);         % Control horizon
 
 %% Simulation settings
-x0 = [1 1 1 0 0 0 0 0 0 0 0 0]';  % Initial conditions
+x0 = [0 0 0 0 0 0 1 0 1 0 1 0]';  % Initial conditions
 simT = 5;              % Simulation time [s]
-ulim = [10 10 10 10];              % Maximum absolute value input
+ulim = [1 1 1 1];              % Maximum absolute value input
 plim = 1;               % Maximum absolute value positiond
 
 %% Run simulations
 % MPC with observer
-[results_mpc] = MPC_Controller(DTSS2, mpc_sim, x0, simT, Ts, ulim, plim);
+[results_mpc] = MPC_Controller2(DTSS1, mpc_sim, x0, simT, Ts, ulim, plim);
 
 %% Plot results
 results = results_mpc;

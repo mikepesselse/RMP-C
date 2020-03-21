@@ -58,7 +58,7 @@ for i = 1:simT/Ts
     
     %     [~,x_true] = ode45(@(t,xs) pendulumdynamics(xs, U(1), g, l, b_a, b_p, m, M), [0 Ts], x_true);
     %       [~, x_true] = ode45(@(t,s) quadEOM(t, s, U(:,1), params), [0 Ts], x_true);
-%         x_true = A*x_true;
+    %     x_true = A*x_true;
     x_true = A*x_true + B*U(:,1);
     
     %     x_true = x_true(end, :)';
