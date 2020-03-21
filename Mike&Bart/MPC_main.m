@@ -88,6 +88,10 @@ plim = 1;               % Maximum absolute value positiond
 %% Plot results
 results = results_mpc;
 
+figure; plot3(results.state(:, 7), results.state(:, 9), results.state(:, 11));
+grid on
+axis equal
+
 % Input plot
 % figure; set(gcf,'units','normalized','outerposition',[0.5 0 .5 .5])
 % stairs(results.U,'b'); hold on;
