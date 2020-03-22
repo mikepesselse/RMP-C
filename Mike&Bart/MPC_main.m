@@ -11,7 +11,7 @@ addpath(genpath(folder));
 %% Construct SS-models
 Ts = 0.02;
 % 
-linstate = [0 0 0 0 0 0 0 0 0 0 0 0 0.03*9.81 0 0 0];     % Linearise around linstate
+linstate = [0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1];     % Linearise around linstate
 % linstate = zeros(1, 16);
 [CTSS1, DTSS1] = constructmodel(Ts, linstate);
 
@@ -73,10 +73,10 @@ mpc_sim.R   = eye(4);                % Input matrix
 mpc_sim.N   = ceil(2/Ts);         % Control horizon
 
 %% Simulation settings
-x0 = [0 0 0 0 0 0 1 0 1 0 1 0]';  % Initial conditions
-wayp = [0 0 0 0 0 0 0.6 0 0.6 0 0.6 0];
+x0 = [0 0 0 0 0 0 -0.5 0 1 0 1 0]';  % Initial conditions
+wayp = [0 0 0 0 0 0 0.1 0 0.5 0 0.5 0];
 simT = 5;              % Simulation time [s]
-ulim = [1 1 1 1]*30;              % Maximum absolute value input
+ulim = [1 1 1 1]*0.1;              % Maximum absolute value input
 plim = 1;               % Maximum absolute value positiond
 
 %% Run simulations
@@ -92,7 +92,6 @@ plot3(wayp(9), wayp(11), wayp(7), 'r*')
 plot3(0, 0, 0, 'b*')
 plot3(x0(9), x0(11), x0(7), 'k*')
 xlabel('x'); ylabel('y'); zlabel('z');
-legend('Trajectory','Waypoint', 'Target', 'Begin')
 grid on
 axis equal
 
