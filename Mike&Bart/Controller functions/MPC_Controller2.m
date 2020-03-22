@@ -20,7 +20,7 @@ D = DTSS1.D;
 
 Q = mpc_sim.Q;
 Qt = mpc_sim.Qt;
-W = eye(3)*100000;
+W = eye(3)*1000;
 R = mpc_sim.R;
 N = mpc_sim.N;
 
@@ -34,27 +34,30 @@ x = sdpvar(repmat(nx,1,N+1),repmat(1,1,N+1));
 % xwayp = zeros(12,1);
 wayp = wayp';
 rho = 1e0;
-kdes = 30;
+kdes = 15;
 
 constraints = [];
 objective = 0;
 for k = 1:N
-    objective = objective + norm(Q*x{k},1) + norm(R*u{k},1);
-        objective = objective + norm(W*([x{k}(9) x{k}(11) x{k}(7)]-[wayp(9) wayp(11) wayp(7)])',1)*sqrt(rho/2/pi)*exp(-rho/2*(k-kdes)^2);
+    objective = objective + norm(Q*x{k},1) + norm(R*u{k},1) + norm(W*([x{k}(9) x{k}(11) x{k}(7)]-[wayp(9) wayp(11) wayp(7)])',1)*sqrt(rho/2/pi)*exp(-rho/2*(k-kdes)^2);
+%         objective = objective + norm(W*([x{k}(9) x{k}(11) x{k}(7)]-[wayp(9) wayp(11) wayp(7)])',1)*sqrt(rho/2/pi)*exp(-rho/2*(k-kdes)^2);
     if k == N
         %         objective = objective + norm(Qt*x{k}, 1);
     end
     constraints = [constraints, x{k+1} == A*x{k} + B*u{k}];
-%     constraints = [constraints, abs(x{k+1}(1)) <= 15/180*pi];
-%     constraints = [constraints, abs(x{k+1}(3)) <= 15/180*pi];
+%         constraints = [constraints, x{k+1}(1) == x{k}(2)*Ts];
+%         constraints = [constraints, x{k+1}(2) == (dtheta*dpsii*a1 + dtheta*a2*omr + b1*u2)*Ts];
+        
+    constraints = [constraints, abs(x{k+1}(1)) <= 15/180*pi];
+    constraints = [constraints, abs(x{k+1}(3)) <= 15/180*pi];
     constraints = [constraints, -ulim(1) <= u{k}(1)<= ulim(1)];
     constraints = [constraints, -ulim(2) <= u{k}(2)<= ulim(2)];
     constraints = [constraints, -ulim(3) <= u{k}(3)<= ulim(3)];
     constraints = [constraints, -ulim(4) <= u{k}(4)<= ulim(4)];
     
-    %         constraints = [constraints, -xlim<=x{k+1}(3)<=xlim];
+%             constraints = [constraints, -xlim<=x{k+1}(3)<=xlim];
 end
-% constraints = [constraints, norm([x{kdes}(9) x{kdes}(11) x{kdes}(7)]-[wayp(9) wayp(11) wayp(7)]) <= 0.5];
+constraints = [constraints, norm([x{kdes}(9) x{kdes}(11) x{kdes}(7)]-[wayp(9) wayp(11) wayp(7)]) <= 0.05];
 controller = optimizer(constraints, objective,[],x{1},[u{:,1}]);
 
 x_true = x0;
