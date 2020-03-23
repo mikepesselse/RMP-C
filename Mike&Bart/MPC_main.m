@@ -19,8 +19,8 @@ mpc_sim.Q   =   [1e4   0   0   0   0   0;
                  0     0   0   0   0   1];         
              
 mpc_sim.Qt  = mpc_sim.Q*1e3;     % Terminal state matrix
-mpc_sim.R   = eye(3)*0.1;                % Input matrix
-mpc_sim.W   = eye(6)*1e5;
+mpc_sim.R   = eye(3)*0.1;        % Input matrix
+mpc_sim.W   = eye(6)*1e5;        % Waypoint matrix
 mpc_sim.N   = ceil(1/Ts);         % Control horizon
 
 %% Simulation settings
