@@ -1,0 +1,4 @@
+1. Update help files and website to emphasize that our code is a global,
+   not local, code.
+
+2. Investigate application of the guy who emailed.

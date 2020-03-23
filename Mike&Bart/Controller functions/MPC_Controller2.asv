@@ -95,14 +95,21 @@ for i = 1:simT/Ts
         end
     end
     options = sdpsettings('solver', 'quadprog');
+%     controller = optimizer(constraints, objective,options,x{1},[u{:}]);
     
-    controller = optimizer(constraints, objective,options,x{1},[u{:}]);
-    U = controller{xn};
+        optimize(constraints,objective,options);
+    U = u{1};
     
-%     optimize(constraints,objective,options);
-%     U = u{1};
+%         U = controller{xn};
     
     U = U(:,1)
+    %     norm(xn-wayp, 1)
+    %     norm(W*(xn-wayp),1)*sqrt(rho/2/pi)*exp(-rho/2*(i-kdes)^2)
+    
+    %     [~,x_true] = ode45(@(t,xs) pendulumdynamics(xs, U(1), g, l, b_a, b_p, m, M), [0 Ts], x_true);
+    %       [~, x_true] = ode45(@(t,s) quadEOM(t, s, U(:,1), params), [0 Ts], x_true);
+    %     x_true = A*x_true;
+    %     x_true = A*x_true + B*U(:,1);
     
     %     x_true(1)  = x_true(1)  + x_true(2)*Ts;         % x
     %     x_true(2)  = x_true(2)  + U(1)/m*x_true(7)*Ts;  % xdot
@@ -121,6 +128,8 @@ for i = 1:simT/Ts
     x_true(4)  = x_true(4)  + U(2)/m*Ts;  % ydot
     x_true(5)  = x_true(5)  + x_true(6)*Ts;         % z
     x_true(6)  = x_true(6)  + (U(3)/m-g)*Ts;        % zdot
+    
+    
     
     xn = x_true;
     
