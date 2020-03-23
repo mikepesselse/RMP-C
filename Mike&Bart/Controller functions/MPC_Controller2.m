@@ -1,4 +1,4 @@
-function [results_mpc] = MPC_Controller(mpc_sim, x0, simT, Ts, ulim, xlim, wayp1, wayp2)
+function [results_mpc] = MPC_Controller(mpc_sim, x0, simT, Ts, ulim, wayp1, wayp2)
 m = 0.030;  % weight (in kg) with 5 vicon markers (each is about 0.25g)
 g = 9.81;   % gravitational constant
 
@@ -21,8 +21,8 @@ x = sdpvar(repmat(nx,1,N+1),repmat(1,1,N+1));
 wayp1 = wayp1';
 wayp2 = wayp2';
 rho = 1e5;
-kdes1 = 30;
-kdes2 = 60;
+kdes1 = 25;
+kdes2 = 65;
 
 constraints = [];
 objective = 0;
@@ -57,10 +57,10 @@ for k = 1:N
     %     constraints = [constraints, abs(x{k}(7)) <= 15/180*pi];
     %     constraints = [constraints, abs(x{k}(9)) <= 15/180*pi];
     
-    constraints = [constraints, 0 <= u{k}(1)<= ulim(1)];
+    constraints = [constraints, -ulim(1) <= u{k}(1)<= ulim(1)];
     constraints = [constraints, -ulim(2) <= u{k}(2)<= ulim(2)];
-    constraints = [constraints, -ulim(3) <= u{k}(3)<= ulim(3)];
-    %         constraints = [constraints, -xlim<=x{k+1}(3)<=xlim];
+    constraints = [constraints, 0 <= u{k}(3)<= ulim(3)];
+    
 end
 % constraints = [constraints, norm([x{kdes}(1) x{kdes}(3) x{kdes}(5)]-[wayp(1) wayp(3) wayp(5)]) <= 0.05];
 % options = sdpsettings('solver','bmibnb', 'debug', 1, 'verbose', 1);%, 'bmibnb.roottight',[0|1]);
@@ -99,8 +99,8 @@ for i = 1:simT/Ts
     controller = optimizer(constraints, objective,options,x{1},[u{:}]);
     U = controller{xn};
     
-%     optimize(constraints,objective,options);
-%     U = u{1};
+%     optimize(constraints,objective,options)
+%     U = value(u{1});
     
     U = U(:,1)
     

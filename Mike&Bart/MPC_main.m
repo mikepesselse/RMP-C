@@ -27,12 +27,11 @@ mpc_sim.N   = ceil(1/Ts);         % Control horizon
 x0 = [0.1 0 1 0 0 0]';
 wayp1 = [0 0 0.5 -1 0.2 0];
 wayp2 = [0 0 0.5 -1 -0.2 0];
-simT = 1;              % Simulation time [s]
+simT = 1.5;              % Simulation time [s]
 ulim = [1 1 1]*1;              % Maximum absolute value input
-plim = 1;               % Maximum absolute value positiond
 
 %% Run simulations
-[results_mpc] = MPC_Controller2(mpc_sim, x0, simT, Ts, ulim, plim, wayp1, wayp2);
+[results_mpc] = MPC_Controller2(mpc_sim, x0, simT, Ts, ulim, wayp1, wayp2);
 
 %% Plot results
 results = results_mpc;
