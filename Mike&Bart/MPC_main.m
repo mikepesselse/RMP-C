@@ -31,7 +31,7 @@ simT = 5;                       % Simulation time [s]
 ulim = [1 1 1]*7;               % Maximum absolute value input [x y z]
 
 %% Run simulations
-[results] = MPC_Controller2(mpc_sim, x0, simT, Ts, ulim, ring1, ring2, goal);
+[results] = MPC_Controller(mpc_sim, x0, simT, Ts, ulim, ring1, ring2, goal);
 
 %% Plot results
 figure; plot3(results.state(:, 1), results.state(:, 3), results.state(:, 5));

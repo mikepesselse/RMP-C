@@ -1,4 +1,4 @@
-function [results_mpc] = MPC_Controller2(mpc_sim, x0, simT, Ts, ulim, ring1, ring2, goal)
+function [results_mpc] = MPC_Controller(mpc_sim, x0, simT, Ts, ulim, ring1, ring2, goal)
 %% Initialise
 m = 0.50;   % weight of the drone
 g = 9.81;   % Gravitational constant
