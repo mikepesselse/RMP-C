@@ -1,6 +1,7 @@
-function [results_mpc] = MPC_Controller(mpc_sim, x0, simT, Ts, ulim, wayp1, wayp2)
-m = 0.030;  % weight (in kg) with 5 vicon markers (each is about 0.25g)
-g = 9.81;   % gravitational constant
+function [results_mpc] = MPC_Controller2(mpc_sim, x0, simT, Ts, ulim, ring1, ring2, goal)
+%% Initialise
+m = 0.50;   % weight of the drone
+g = 9.81;   % Gravitational constant
 
 Q = mpc_sim.Q;
 Qt = mpc_sim.Qt;
@@ -8,33 +9,25 @@ W = mpc_sim.W;
 R = mpc_sim.R;
 N = mpc_sim.N;
 
-% nx = size(A, 1); % Number of states
-% nu = size(B, 2); % Number of inputs
-nx = 6;
-nu = 3;
+nx = size(Q, 1);    % Number of states
+nu = size(R, 1);    % Number of inputs
 
+u = sdpvar(repmat(nu,1,N),ones(1,N));       % Define YALMIP input vector
+x = sdpvar(repmat(nx,1,N+1),ones(1,N+1));   % Define YALMIP state vector
 
-u = sdpvar(repmat(nu,1,N),repmat(1,1,N));
-x = sdpvar(repmat(nx,1,N+1),repmat(1,1,N+1));
+%% Calculate waypoints based on rings
+fac = 0.05;
+wayp1 = [ring1(1)-fac*ring1(2) ring1(2) ring1(3)-fac*ring1(4) ring1(4) ring1(5)-fac*ring1(6) ring1(6)]';
+wayp2 = [ring1(1)+fac*ring1(2) ring1(2) ring1(3)+fac*ring1(4) ring1(4) ring1(5)+fac*ring1(6) ring1(6)]';
+wayp3 = [ring2(1)-fac*ring2(2) ring2(2) ring2(3)-fac*ring2(4) ring2(4) ring2(5)-fac*ring2(6) ring2(6)]';
+wayp4 = [ring2(1)-fac*ring2(2) ring2(2) ring2(3)+fac*ring2(4) ring2(4) ring2(5)+fac*ring2(6) ring2(6)]';
+goal = goal';
 
-% xwayp = zeros(12,1);
-wayp1 = wayp1';
-wayp2 = wayp2';
-rho = 1e5;
-kdes1 = 25;
-kdes2 = 65;
-
+%% Define constraints
 constraints = [];
-objective = 0;
 for k = 1:N
-    %     objective = objective + norm(Q*x{k},1) + norm(R*u{k},1);
-    %     objective = objective + norm(W*(x{k}-wayp1),1)*sqrt(rho/2/pi)*exp(-rho/2*(k-(kdes1-i))^2);
-    %     objective = objective + norm(W*(x{k}-wayp2),1)*sqrt(rho/2/pi)*exp(-rho/2*(k-(kdes2-i))^2);
-    %     if k == N
-    %         objective = objective + norm(Qt*x{k}, 1);
-    %     end
     %     constraints = [constraints, x{k+1}(1)  == x{k}(1)  + x{k}(2)*Ts];
-    %     cosntraints = [constraints, x{k+1}(2)  == x{k}(2)  + u{k}(1)/m*x{k}(7)*Ts];
+    %     constraints = [constraints, x{k+1}(2)  == x{k}(2)  + u{k}(1)/m*x{k}(7)*Ts];
     %     constraints = [constraints, x{k+1}(3)  == x{k}(3)  + x{k}(4)*Ts];
     %     constraints = [constraints, x{k+1}(4)  == x{k}(4)  + u{k}(1)/m*x{k}(9)*Ts];
     %     constraints = [constraints, x{k+1}(5)  == x{k}(5)  + x{k}(6)*Ts];
@@ -44,6 +37,10 @@ for k = 1:N
     %     constraints = [constraints, x{k+1}(9)  == x{k}(9)  + x{k}(10)*Ts];
     %     constraints = [constraints, x{k+1}(10) == x{k}(10) + u{k}(3)*Ts];
     
+    %     constraints = [constraints, abs(x{k}(7)) <= 15/180*pi];
+    %     constraints = [constraints, abs(x{k}(9)) <= 15/180*pi];
+    
+    % Dynamical constraints
     constraints = [constraints, x{k+1}(1)  == x{k}(1)  + x{k}(2)*Ts];
     constraints = [constraints, x{k+1}(2)  == x{k}(2)  + u{k}(1)/m*Ts];
     constraints = [constraints, x{k+1}(3)  == x{k}(3)  + x{k}(4)*Ts];
@@ -51,86 +48,92 @@ for k = 1:N
     constraints = [constraints, x{k+1}(5)  == x{k}(5)  + x{k}(6)*Ts];
     constraints = [constraints, x{k+1}(6)  == x{k}(6)  + (u{k}(3)/m-g)*Ts];
     
-    
-    %     constraints = [constraints, abs(x{k}(7)) <= 15/180*pi];
-    %     constraints = [constraints, abs(x{k}(9)) <= 15/180*pi];
-    
-    constraints = [constraints, -ulim(1) <= u{k}(1)<= ulim(1)];
+    % Input constraints
+    constraints = [constraints, -ulim(3) <= u{k}(1)<= ulim(1)];
     constraints = [constraints, -ulim(2) <= u{k}(2)<= ulim(2)];
     constraints = [constraints, 0 <= u{k}(3)<= ulim(3)];
     
 end
 
+%% Define objective functions and optimizers
 options = sdpsettings('solver', 'quadprog');
 
+% Controller for waypoint 1
 objective = 0;
 for k = 1:N
-    objective = objective + norm(Q*(x{k}-wayp1), 1) + norm(R*u{k}, 1);
+    objective = objective + norm(W*(x{k}-wayp1), 1) + norm(R*u{k}, 1);
     if k == N
         objective = objective + norm(Qt*(x{k}-wayp1), 1);
     end
 end
 controller1 = optimizer(constraints, objective, options,x{1},[u{:}]);
 
+% Controller for waypoint 2
 objective = 0;
 for k = 1:N
-    objective = objective + norm(Q*(x{k}-wayp2), 1) + norm(R*u{k}, 1);
+    objective = objective + norm(W*(x{k}-wayp2), 1) + norm(R*u{k}, 1);
     if k == N
         objective = objective + norm(Qt*(x{k}-wayp2), 1);
     end
 end
 controller2 = optimizer(constraints, objective, options,x{1},[u{:}]);
 
+% Controller for waypoint 3
 objective = 0;
 for k = 1:N
-    objective = objective + norm(Q*x{k}, 1) + norm(R*u{k}, 1);
+    objective = objective + norm(Q*(x{k}-wayp3), 1) + norm(R*u{k}, 1);
     if k == N
-        objective = objective + norm(Qt*x{k}, 1);
+        objective = objective + norm(Qt*(x{k}-wayp3), 1);
     end
 end
 controller3 = optimizer(constraints, objective, options,x{1},[u{:}]);
 
+% Controller for waypoint 4
+objective = 0;
+for k = 1:N
+    objective = objective + norm(Q*(x{k}-wayp4), 1) + norm(R*u{k}, 1);
+    if k == N
+        objective = objective + norm(Qt*(x{k}-wayp4), 1);
+    end
+end
+controller4 = optimizer(constraints, objective, options,x{1},[u{:}]);
+
+% Controller for goal
+objective = 0;
+for k = 1:N
+    objective = objective + norm(Q*(x{k}-goal), 1) + norm(R*u{k}, 1);
+    if k == N
+        objective = objective + norm(Qt*(x{k}-goal), 1);
+    end
+end
+controller5 = optimizer(constraints, objective, options,x{1},[u{:}]);
+
 
 x_true = x0;
 implementedU = [];
-xn = x_true;
 
 st = 1;
 
 f = waitbar(0,'1','Name','Simulating MPC controller',...
     'CreateCancelBtn','setappdata(gcbf,''canceling'',1)');
-for i = 1:simT/Ts
-    %     objective = 0;
-    %     if i < kdes1
-    %         for k = 1:N
-    %             objective = objective + norm(Q*x{k},1) + norm(R*u{k},1);
-    %             objective = objective + norm(W*(x{k}-wayp1),1)*sqrt(rho/2/pi)*exp(-rho/2*(k-(kdes1-i))^2);
-    %         end
-    %     elseif i < kdes2
-    %         for k = 1:N
-    %             objective = objective + norm(Q*x{k},1) + norm(R*u{k},1);
-    %             objective = objective + norm(W*(x{k}-wayp2),1)*sqrt(rho/2/pi)*exp(-rho/2*(k-(kdes2-i))^2);
-    %         end
-    %     else
-    %         for k = 1:N
-    %             objective = objective + norm(Q*x{k},1) + norm(R*u{k},1);
-    %             if k == N
-    %                 objective = objective + norm(Qt*x{k}, 1);
-    %             end
-    %         end
-    %     end
+for i = 1:simT/Ts  
     
-    
+    % Select controller based on drone position
     if st == 1
-        %         controller = optimizer(constraints, objective, options,x{1},[u{:}]);
-        U = controller1{xn};
+        U = controller1{x_true};
         U = U(:,1);
     elseif st == 2
-        U = controller2{xn};
+        U = controller2{x_true};
         U = U(:,1);
     elseif st == 3
-        U = controller3{xn};
+        U = controller3{x_true};
         U = U(:,1);
+    elseif st == 4
+        U = controller4{x_true};
+        U = U(:,1);
+    elseif st == 5
+        U = controller5{x_true};
+        U = U(:, 1);
     end
     
     %     x_true(1)  = x_true(1)  + x_true(2)*Ts;         % x
@@ -145,20 +148,21 @@ for i = 1:simT/Ts
     %     x_true(10) = x_true(10) + U(3)*Ts;              % phidot
     
     x_true(1)  = x_true(1)  + x_true(2)*Ts;         % x
-    x_true(2)  = x_true(2)  + U(1)/m*Ts;  % xdot
+    x_true(2)  = x_true(2)  + U(1)/m*Ts;            % xdot
     x_true(3)  = x_true(3)  + x_true(4)*Ts;         % y
-    x_true(4)  = x_true(4)  + U(2)/m*Ts;  % ydot
+    x_true(4)  = x_true(4)  + U(2)/m*Ts;            % ydot
     x_true(5)  = x_true(5)  + x_true(6)*Ts;         % z
     x_true(6)  = x_true(6)  + (U(3)/m-g)*Ts;        % zdot
     
-    xn = x_true;
-    x_true_wayp1
-    norm(x_true-wayp1)
-    
-    if st == 1 && norm(x_true-wayp1) <= 0.05
-        st = 2
-    elseif st == 2 && norm(x_true-wayp2) <= 0.05
+    % Check if waypoint is reached and switch case
+    if st == 1 && norm([x_true(1) x_true(3) x_true(5)] - [wayp1(1) wayp1(3) wayp1(5)]) <= 0.01
+        st = 2;
+    elseif st == 2 && norm([x_true(1) x_true(3) x_true(5)] - [wayp2(1) wayp2(3) wayp2(5)]) <= 0.01
         st = 3;
+    elseif st == 3 && norm([x_true(1) x_true(3) x_true(5)] - [wayp3(1) wayp3(3) wayp3(5)]) <= 0.01
+        st = 4;
+    elseif st == 4 && norm([x_true(1) x_true(3) x_true(5)] - [wayp4(1) wayp4(3) wayp4(5)]) <= 0.01
+        st = 5;
     end
     
     % Save control inputs and state
