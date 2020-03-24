@@ -1,4 +1,4 @@
-function [results_mpc] = MPC_Controller(mpc_sim, x0, simT, Ts, ulim, wayp1, wayp2, wayp3, wayp4)
+function [results_mpc] = MPC_Controller(mpc_sim, x0, simT, Ts, ulim, wayp1, wayp2)
 m = 0.030;  % weight (in kg) with 5 vicon markers (each is about 0.25g)
 g = 9.81;   % gravitational constant
 
@@ -20,8 +20,6 @@ x = sdpvar(repmat(nx,1,N+1),repmat(1,1,N+1));
 % xwayp = zeros(12,1);
 wayp1 = wayp1';
 wayp2 = wayp2';
-wayp3 = wayp3';
-wayp4 = wayp4';
 rho = 1e5;
 kdes1 = 25;
 kdes2 = 65;
@@ -67,7 +65,7 @@ options = sdpsettings('solver', 'quadprog');
 
 objective = 0;
 for k = 1:N
-    objective = objective + norm(W*(x{k}-wayp1), 1) + norm(R*u{k}, 1);
+    objective = objective + norm(Q*(x{k}-wayp1), 1) + norm(R*u{k}, 1);
     if k == N
         objective = objective + norm(Qt*(x{k}-wayp1), 1);
     end
@@ -76,7 +74,7 @@ controller1 = optimizer(constraints, objective, options,x{1},[u{:}]);
 
 objective = 0;
 for k = 1:N
-    objective = objective + norm(W*(x{k}-wayp2), 1) + norm(R*u{k}, 1);
+    objective = objective + norm(Q*(x{k}-wayp2), 1) + norm(R*u{k}, 1);
     if k == N
         objective = objective + norm(Qt*(x{k}-wayp2), 1);
     end
@@ -85,30 +83,12 @@ controller2 = optimizer(constraints, objective, options,x{1},[u{:}]);
 
 objective = 0;
 for k = 1:N
-    objective = objective + norm(Q*(x{k}-wayp3), 1) + norm(R*u{k}, 1);
-    if k == N
-        objective = objective + norm(Qt*(x{k}-wayp3), 1);
-    end
-end
-controller3 = optimizer(constraints, objective, options,x{1},[u{:}]);
-
-objective = 0;
-for k = 1:N
-    objective = objective + norm(Q*(x{k}-wayp4), 1) + norm(R*u{k}, 1);
-    if k == N
-        objective = objective + norm(Qt*(x{k}-wayp4), 1);
-    end
-end
-controller4 = optimizer(constraints, objective, options,x{1},[u{:}]);
-
-objective = 0;
-for k = 1:N
     objective = objective + norm(Q*x{k}, 1) + norm(R*u{k}, 1);
     if k == N
         objective = objective + norm(Qt*x{k}, 1);
     end
 end
-controller5 = optimizer(constraints, objective, options,x{1},[u{:}]);
+controller3 = optimizer(constraints, objective, options,x{1},[u{:}]);
 
 
 x_true = x0;
@@ -151,12 +131,6 @@ for i = 1:simT/Ts
     elseif st == 3
         U = controller3{xn};
         U = U(:,1);
-    elseif st == 4
-        U = controller4{xn};
-        U = U(:,1);
-    elseif st == 5;
-        U = controller5{xn};
-        U = U(:, 1);
     end
     
     %     x_true(1)  = x_true(1)  + x_true(2)*Ts;         % x
@@ -178,15 +152,13 @@ for i = 1:simT/Ts
     x_true(6)  = x_true(6)  + (U(3)/m-g)*Ts;        % zdot
     
     xn = x_true;
+    x_true_wayp1
+    norm(x_true-wayp1)
     
-    if st == 1 && norm([x_true(1) x_true(3) x_true(5)] - [wayp1(1) wayp1(3) wayp1(5)]) <= 0.01
-        st = 2;
-    elseif st == 2 && norm([x_true(1) x_true(3) x_true(5)] - [wayp2(1) wayp2(3) wayp2(5)]) <= 0.01
+    if st == 1 && norm(x_true-wayp1) <= 0.05
+        st = 2
+    elseif st == 2 && norm(x_true-wayp2) <= 0.05
         st = 3;
-    elseif st == 3 && norm([x_true(1) x_true(3) x_true(5)] - [wayp3(1) wayp3(3) wayp3(5)]) <= 0.01
-        st = 4;
-    elseif st == 4 && norm([x_true(1) x_true(3) x_true(5)] - [wayp4(1) wayp4(3) wayp4(5)]) <= 0.01
-        st = 5;
     end
     
     % Save control inputs and state
