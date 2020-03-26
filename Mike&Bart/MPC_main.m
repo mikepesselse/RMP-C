@@ -1,5 +1,5 @@
 %% Robot Motion Planning and Control Assignment Q3 2019/2020
-% Daan Bruggink     [.......]
+% Daan Bruggink     [4318064]
 % Bart de Jong      [4367146]
 % Tom Kerssemakers  [.......]
 % Mike Pesselse     [4300564]
