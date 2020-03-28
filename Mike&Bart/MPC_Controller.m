@@ -53,6 +53,12 @@ for k = 1:N
     constraints = [constraints, -ulim(2) <= u{k}(2)<= ulim(2)];
     constraints = [constraints, 0 <= u{k}(3)<= ulim(3)];
     
+    % State constraints
+    constraints = [constraints -1.5 <= x{k+1}(1) <= 1.5];
+    constraints = [constraints 0 <= x{k+1}(3) <= 10];
+    constraints = [constraints -1.5 <= x{k+1}(5) <= 1.5];
+    constraints = [constraints 0 <= abs(x{k+1}(2)) + abs(x{k+1}(4)) + abs(x{k+1}(6)) <= 3];
+    
 end
 
 %% Define objective functions and optimizers
@@ -155,13 +161,13 @@ for i = 1:simT/Ts
     x_true(6)  = x_true(6)  + (U(3)/m-g)*Ts;        % zdot
     
     % Check if waypoint is reached and switch case
-    if st == 1 && norm([x_true(1) x_true(3) x_true(5)] - [wayp1(1) wayp1(3) wayp1(5)]) <= 0.01
+    if st == 1 && norm([x_true(1) x_true(3) x_true(5)] - [wayp1(1) wayp1(3) wayp1(5)]) <= 0.1
         st = 2;
-    elseif st == 2 && norm([x_true(1) x_true(3) x_true(5)] - [wayp2(1) wayp2(3) wayp2(5)]) <= 0.01
+    elseif st == 2 && norm([x_true(1) x_true(3) x_true(5)] - [wayp2(1) wayp2(3) wayp2(5)]) <= 0.1
         st = 3;
-    elseif st == 3 && norm([x_true(1) x_true(3) x_true(5)] - [wayp3(1) wayp3(3) wayp3(5)]) <= 0.01
+    elseif st == 3 && norm([x_true(1) x_true(3) x_true(5)] - [wayp3(1) wayp3(3) wayp3(5)]) <= 0.1
         st = 4;
-    elseif st == 4 && norm([x_true(1) x_true(3) x_true(5)] - [wayp4(1) wayp4(3) wayp4(5)]) <= 0.01
+    elseif st == 4 && norm([x_true(1) x_true(3) x_true(5)] - [wayp4(1) wayp4(3) wayp4(5)]) <= 0.1
         st = 5;
     end
     
