@@ -124,7 +124,7 @@ implementedU = [];
 st = 1;
 
 f = waitbar(0,'1','Name','Simulating MPC controller',...
-    'CreateCancelBtn','setappdata(gcbf,''canceling'',1)'); tic
+    'CreateCancelBtn','setappdata(gcbf,''canceling'',1)');
 for i = 1:simT/Ts  
     
     % Select controller based on drone position
@@ -183,7 +183,7 @@ for i = 1:simT/Ts
     waitbar(i/(simT/Ts),f,sprintf(num2str(ceil(i/(simT/Ts)*100))))
     
 end
-toc
+
 results_mpc.U       = implementedU;
 results_mpc.state   = state;
 

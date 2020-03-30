@@ -83,7 +83,7 @@ plot3(x0(1), x0(3), x0(5), 'k*')
 xlabel('x'); ylabel('y'); zlabel('z');
 legend('Trajectory', 'ring 1', 'ring 2', 'goal', 'start')
 grid on
-xlim([-3 3]); ylim([0 10]); zlim([-3 3])
+xlim([-1.5 1.5]); ylim([0 10]); zlim([-1.5 1.5])
 pbaspect([3 10 3])
 
 %% Animate results
@@ -98,13 +98,15 @@ xlim([-1.5 1.5]); ylim([0 10]); zlim([-1.5 1.5])
 pbaspect([3 10 3])
 grid on
 
+tic
 for i = 1:simT/Ts
      plot3(results.state(1:i, 1), results.state(1:i, 3), results.state(1:i, 5), 'r--');
      p1 = plot3(results.state(i, 1), results.state(i, 3), results.state(i,5), 'r.');
-     F(i) = getframe;
+     pause(Ts/2)
+%      F(i) = getframe;
      delete(p1)
 end
-
+toc
 %% Make animation into video at correct fps
 % video = VideoWriter('DroneSimulation.mp4','MPEG-4');
 % video.Quality = 90;
