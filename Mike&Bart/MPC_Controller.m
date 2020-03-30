@@ -16,7 +16,7 @@ u = sdpvar(repmat(nu,1,N),ones(1,N));       % Define YALMIP input vector
 x = sdpvar(repmat(nx,1,N+1),ones(1,N+1));   % Define YALMIP state vector
 
 %% Calculate waypoints based on rings
-fac = 0.05;
+fac = 0.05;     % Factor that determines how close the waypoints are to the center of the rings
 wayp1 = [ring1(1)-fac*ring1(2) ring1(2) ring1(3)-fac*ring1(4) ring1(4) ring1(5)-fac*ring1(6) ring1(6)]';
 wayp2 = [ring1(1)+fac*ring1(2) ring1(2) ring1(3)+fac*ring1(4) ring1(4) ring1(5)+fac*ring1(6) ring1(6)]';
 wayp3 = [ring2(1)-fac*ring2(2) ring2(2) ring2(3)-fac*ring2(4) ring2(4) ring2(5)-fac*ring2(6) ring2(6)]';
@@ -26,6 +26,8 @@ goal = goal';
 %% Define constraints
 constraints = [];
 for k = 1:N
+    
+    % These are the nonlinear system dynamics------------------------------
     %     constraints = [constraints, x{k+1}(1)  == x{k}(1)  + x{k}(2)*Ts];
     %     constraints = [constraints, x{k+1}(2)  == x{k}(2)  + u{k}(1)/m*x{k}(7)*Ts];
     %     constraints = [constraints, x{k+1}(3)  == x{k}(3)  + x{k}(4)*Ts];
@@ -39,6 +41,7 @@ for k = 1:N
     
     %     constraints = [constraints, abs(x{k}(7)) <= 15/180*pi];
     %     constraints = [constraints, abs(x{k}(9)) <= 15/180*pi];
+    % ---------------------------------------------------------------------
     
     % Dynamical constraints
     constraints = [constraints, x{k+1}(1)  == x{k}(1)  + x{k}(2)*Ts];
@@ -142,6 +145,7 @@ for i = 1:simT/Ts
         U = U(:, 1);
     end
     
+    % Nonlinear dynamics---------------------------------------------------
     %     x_true(1)  = x_true(1)  + x_true(2)*Ts;         % x
     %     x_true(2)  = x_true(2)  + U(1)/m*x_true(7)*Ts;  % xdot
     %     x_true(3)  = x_true(3)  + x_true(4)*Ts;         % y
@@ -152,6 +156,7 @@ for i = 1:simT/Ts
     %     x_true(8)  = x_true(8)  + U(2)*Ts;              % thetadot
     %     x_true(9)  = x_true(9)  + x_true(10)*Ts;        % phi
     %     x_true(10) = x_true(10) + U(3)*Ts;              % phidot
+    % ---------------------------------------------------------------------
     
     x_true(1)  = x_true(1)  + x_true(2)*Ts;         % x
     x_true(2)  = x_true(2)  + U(1)/m*Ts;            % xdot
